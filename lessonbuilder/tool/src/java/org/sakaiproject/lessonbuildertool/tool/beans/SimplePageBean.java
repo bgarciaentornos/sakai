@@ -7485,6 +7485,11 @@ public class SimplePageBean {
 				maxPoints = "1";
 			}
 
+			if (gradebookIfc.isGradebookGroupEnabled(getCurrentSiteId()) && (selectedGroups == null || selectedGroups.length <= 0)) {
+				setErrMessage(messageLocator.getMessage("simplepage.multi_gradebook.no_group"));
+				return "failure";
+			}
+
 			Integer points = parseMaxPoints(maxPoints);
 
 			if (graded) {
@@ -7525,12 +7530,6 @@ public class SimplePageBean {
 						if (deletedGroups != null && deletedGroups.size() > 0) {
 							add = gradebookIfc.removeExternalAssessmentByGradebookList(deletedGroups, gradebookId);
 						}
-
-						if (!add) {
-							setErrMessage(messageLocator.getMessage("simplepage.no-gradebook"));
-						} else {
-							comment.setGradebookTitle(pageTitle + commentTitle);
-						}
 					} else {
 						if (comment.getGradebookId() != null && !comment.getGradebookPoints().equals(points)) {
 							add = gradebookIfc.updateExternalAssessment(gradebookUids, gradebookId, null,
@@ -7544,11 +7543,12 @@ public class SimplePageBean {
 								setErrMessage(messageLocator.getMessage("simplepage.existing-gradebook"));
 							}
 						}
-						if (!add) {
-							setErrMessage(messageLocator.getMessage("simplepage.no-gradebook"));
-						} else {
-							comment.setGradebookTitle(pageTitle + commentTitle);
-						}
+					}
+
+					if (!add) {
+						setErrMessage(messageLocator.getMessage("simplepage.no-gradebook"));
+					} else {
+						comment.setGradebookTitle(pageTitle + commentTitle);
 					}
 				} else {
 					// Must be a student page comments tool.
@@ -7935,10 +7935,16 @@ public class SimplePageBean {
 
 		}
 
-		Integer pointsInt = parseMaxPoints(maxPoints);
-
-		if (pointsInt == null) {
-			return "failure";
+		int pointsInt = 10;
+		if(StringUtils.isNotBlank(maxPoints)) {
+			try {
+				pointsInt = Integer.valueOf(maxPoints);
+			}catch(Exception ex) {
+				setErrMessage(messageLocator.getMessage("simplepage.integer-expected"));
+				// can't fail, because it will leave an inconsistent items. So create one with default point value
+				// check in UI to make sure it can't happen
+				// return "failure";
+			}
 		}
 
 		if (!graded || (gradebookTitle != null && gradebookTitle.trim().equals(""))) {
@@ -8333,13 +8339,17 @@ public class SimplePageBean {
 
 			if (gradebookIfc.isGradebookGroupEnabled(getCurrentSiteId())) {
 				gradebookUids = Arrays.asList(selectedGroups);
-			}
 
-			Integer points = parseMaxPoints(maxPoints);
-			Integer pointsC = parseMaxPoints(sMaxPoints);
+				if (gradebookUids == null || gradebookUids.size() <= 0) {
+					setErrMessage(messageLocator.getMessage("simplepage.multi_gradebook.no_group"));
+					return "failure";
+				}
+			}
 
 			// Handle the grading of pages
 			if (graded) {
+				Integer points = parseMaxPoints(maxPoints);
+
 				if (points == null) {
 					return "failure";
 				}
@@ -8370,6 +8380,8 @@ public class SimplePageBean {
 
 			// Handling the grading of comments on pages
 			if (sGraded) {
+				Integer pointsC = parseMaxPoints(sMaxPoints);
+
 				if (pointsC == null) {
 					return "failure";
 				}
