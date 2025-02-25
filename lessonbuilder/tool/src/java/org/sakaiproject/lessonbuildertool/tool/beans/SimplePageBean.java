@@ -5623,11 +5623,10 @@ public class SimplePageBean {
 			popAdvisor(advisor);
 		}
 
-		Condition rootCondition = conditionService.getRootConditionForItem(currentSiteId, LessonBuilderConstants.TOOL_ID,
-				Long.toString(item.getId())).orElse(null);
+		Optional<Condition> rootCondition = conditionService.getRootConditionForItem(currentSiteId, LessonBuilderConstants.TOOL_ID, Long.toString(item.getId()));
 
-		if (rootCondition != null) {
-			return conditionService.evaluateCondition(rootCondition, getCurrentUserId());
+		if (rootCondition.isPresent()) {
+			return conditionService.evaluateCondition(rootCondition.get(), getCurrentUserId());
 		}
 
 		try {
